@@ -1,0 +1,137 @@
+### SNA start 
+
+## URL : https://kuduz.tistory.com/1087?category=834629
+
+### 1. package ----
+
+#install.packages('tidygraph')
+#install.packages('ggraph')
+
+library(tidygraph)
+library(ggraph)
+library(dplyr)
+library(igraph)
+
+### 2. topic:featureing  ----
+
+## 2.1 load data
+
+feat <- read.csv('./0.data/featuring.csv')
+
+## 2.2 data preprocessing 
+
+fg <- as_tbl_graph(feat)
+
+## 2.3 graph
+
+plot(fg)
+
+ggraph(fg, layout = 'kk') +  geom_node_point()  +  geom_edge_link()
+
+feat %>%
+  as_tbl_graph() %>%
+  ggraph(layout='kk') + 
+  geom_node_text(aes(label=name)) +
+  geom_edge_link(aes(start_cap = label_rect(node1.name), end_cap = label_rect(node2.name)))
+
+### 3. topic : subway
+
+## 3.1 load data
+
+subway <- read.csv('./0.data/subway.csv')
+
+metro <- read.csv('./0.data/metro.csv')
+
+## 3.2 graph
+
+subway %>% as_tbl_graph() %>%
+  ggraph(layout='kk') + 
+  geom_edge_link(aes(color=line)) + 
+  geom_node_point(color='gray25', size=1)
+
+## 3.3 centrality
+
+# • 매개 중심성: centrality_betweenness()
+# • 근접 중심성: centrality_closeness()
+# • 고유벡터 중심성: centrality_eigen()
+# • 페이지랭크: centrality_pagerank()
+# • 연결 중심성: centrality_degree()
+
+
+# 고유벡터 중심성(eigenvector centrality) : 한 노드와 연결된 다른 노드의 중요성까지 따져서 중심성을 계산한 결과
+
+subway %>% as_tbl_graph() %>%
+  mutate(eig=centrality_eigen()) %>%
+  as_tibble %>% arrange(desc(eig))
+
+
+metro %>% as_tbl_graph() %>%
+  mutate(eig=centrality_eigen()) %>%
+  as_tibble %>% 
+  arrange(desc(eig))
+
+# 가중치(weights) 적용  
+
+metro %>% as_tbl_graph() %>%
+  mutate(eig=centrality_pagerank(weights=total)) %>%
+  as_tibble %>% 
+  arrange(desc(eig))
+
+### 4. topic : school ### 사람과 단체 분리  
+
+## 4.1 sample data
+
+school <- data.frame(사람=c('가', '나', '다', '라', '마', '바'),
+                       고교=c('1', '2', '3', '1', '2', '3'),
+                       대학=c('a', 'b', 'a', 'b', 'a', 'b'))
+
+school_고교 <- school[, c(1, 2)]
+
+names(school_고교)[2] <- '학교'
+
+school_대학 <- school[, c(1, 3)]
+
+names(school_대학)[2] <- '학교'
+
+school <- rbind(school_고교, school_대학)
+
+## 4.2 graph
+
+school %>% 
+  as_tbl_graph() %>% 
+  ggraph(layout='kk') + 
+  geom_edge_link(aes(start_cap = label_rect(node1.name), end_cap = label_rect(node2.name))) +
+  geom_node_text(aes(label=name))
+
+## 4.3 igraph
+
+sg <- graph_from_data_frame(school)
+
+bipartite_mapping(sg) ### 사람 false / 학교 true  
+
+V(sg) ### v : vertex 꼭지점 
+
+V(sg)$type <- bipartite_mapping(sg)$type
+
+as_incidence_matrix(sg)
+
+t(as_incidence_matrix(sg))
+
+as_incidence_matrix(sg) %*% t(as_incidence_matrix(sg))
+
+sm <- as_incidence_matrix(sg) %*% t(as_incidence_matrix(sg))
+diag(sm) <- 0
+sm
+
+sm %>% as_tbl_graph() %>%
+  ggraph(layout='kk') + 
+  geom_edge_link(aes(start_cap = label_rect(node1.name), end_cap = label_rect(node2.name))) +
+  geom_node_text(aes(label=name))
+
+### 5. topic : kovo ### 사람과 단체 분리  
+
+
+
+k <- read.csv('./0.data/kovo.csv')
+
+
