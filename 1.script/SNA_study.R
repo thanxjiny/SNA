@@ -4,8 +4,8 @@
 
 ### 1. package ----
 
-#install.packages('tidygraph')
-#install.packages('ggraph')
+install.packages('tidygraph')
+install.packages('ggraph')
 
 library(tidygraph)
 library(ggraph)
@@ -130,8 +130,53 @@ sm %>% as_tbl_graph() %>%
 
 ### 5. topic : kovo ### 사람과 단체 분리  
 
-
+## 5.1 load data
 
 k <- read.csv('./0.data/kovo.csv')
 
+## 5.2 data preprocessing
+
+k_고교 <- k[, c(1, 2)]
+k_대학 <- k[, c(1, 3)]
+names(k_고교)[2] <- '학교'
+names(k_대학)[2] <- '학교'
+k <- rbind(k_고교, k_대학)
+
+# 5.3 centrality
+
+k %>% as_tbl_graph() %>%
+  mutate(eig=centrality_eigen()) %>%
+  arrange(desc(eig)) %>%
+  as_tibble
+
+k %>% as_tbl_graph() %>%
+  mutate(pr=centrality_pagerank()) %>%
+  arrange(desc(pr)) %>%
+  as_tibble
+
+kg <- graph_from_data_frame(k)
+V(kg)$type <- bipartite_mapping(kg)$type
+km <- as_incidence_matrix(kg)
+km <- km %*% t(km)
+diag(km) <- 0
+
+km %>% as_tbl_graph()
+
+km %>% as_tbl_graph() %>%
+  mutate(pg=centrality_pagerank()) %>%
+  arrange(desc(pg)) %>%
+  as_tibble
+
+km %>% as_tbl_graph() %>%
+  mutate(cm=group_infomap()) %>%
+  arrange(desc(cm)) %>%
+  as_tibble
+
+km %>% as_tbl_graph() %>%
+  mutate(pg=centrality_pagerank(),
+         cm=group_infomap()) %>%
+  ggraph(layout='lgl') + 
+  geom_edge_link(aes(width=weight), alpha=.8) +
+  scale_edge_width(range=c(0.2, 2)) +
+  geom_node_point(aes(size=pg, color=as.factor(cm)))
 
