@@ -4,8 +4,8 @@
 
 ### 1. package ----
 
-install.packages('tidygraph')
-install.packages('ggraph')
+#install.packages('tidygraph')
+#install.packages('ggraph')
 
 library(tidygraph)
 library(ggraph)
@@ -34,7 +34,7 @@ feat %>%
   geom_node_text(aes(label=name)) +
   geom_edge_link(aes(start_cap = label_rect(node1.name), end_cap = label_rect(node2.name)))
 
-### 3. topic : subway
+### 3. topic : subway-----
 
 ## 3.1 load data
 
@@ -77,7 +77,8 @@ metro %>% as_tbl_graph() %>%
   as_tibble %>% 
   arrange(desc(eig))
 
-### 4. topic : school ### 사람과 단체 분리  
+### 4. topic : school-----
+### 사람과 단체 분리  
 
 ## 4.1 sample data
 
@@ -128,7 +129,8 @@ sm %>% as_tbl_graph() %>%
   geom_edge_link(aes(start_cap = label_rect(node1.name), end_cap = label_rect(node2.name))) +
   geom_node_text(aes(label=name))
 
-### 5. topic : kovo ### 사람과 단체 분리  
+### 5. topic : kovo----- 
+### 사람과 단체 분리  
 
 ## 5.1 load data
 
@@ -179,4 +181,22 @@ km %>% as_tbl_graph() %>%
   geom_edge_link(aes(width=weight), alpha=.8) +
   scale_edge_width(range=c(0.2, 2)) +
   geom_node_point(aes(size=pg, color=as.factor(cm)))
+
+### 6. topic : featuring 2019----
+
+# 6.1 load data
+
+feat <- read.csv('./0.data/featuring_2019.csv')
+
+feat %>%
+  as_tbl_graph(directed=FALSE) %>%
+  activate(nodes) %>%
+  mutate(eigen = centrality_eigen(),
+         group = group_infomap()) %>%
+  ggraph(layout='nicely') +
+  geom_edge_link(color='gray50', alpha=.2) +
+  geom_node_point(aes(color=factor(group), size=eigen)) +
+  geom_node_text(aes(label=name), size=3, repel=TRUE) +
+  theme_graph() +
+  theme(legend.position='none')
 
