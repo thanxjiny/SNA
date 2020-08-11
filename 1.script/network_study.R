@@ -1,4 +1,4 @@
-###  1. statnet
+###  1. statnet -----
 
 # https://statkclee.github.io/network/ml-network-data.html
 
@@ -40,7 +40,7 @@ par(mfrow=c(1,2))
 gplot(net1, vertex.col = 2, displaylabels = TRUE, main="사회행렬(SocioMatrix)")
 gplot(net2, vertex.col = 2, displaylabels = TRUE, main="엣지리스트(Edgelist)")
 
-# 1.3 노드 속성
+# 1.3 노드 속성 ----
 set.vertex.attribute(net1, "gender", c("F", "F", "M", "F", "M"))
 net1 %v% "alldeg" <- degree(net1)
 list.vertex.attributes(net1)
@@ -48,6 +48,86 @@ list.vertex.attributes(net1)
 get.vertex.attribute(net1, "gender")
 get.vertex.attribute(net1, "alldeg")
 get.vertex.attribute(net1, "na")
+
+# 1.4. 엣지 속성 -----
+list.edge.attributes(net1)
+
+set.edge.attribute(net1,"rndval", runif(network.size(net1),0,1)) 
+ # runif: 0부터 1사이의 균일 분포
+list.edge.attributes(net1)
+
+summary(net1 %e% "rndval")
+
+summary(get.edge.attribute(net1,"rndval"))
+
+netval1 <- rbind(c(0,2,3,0,0),
+                 c(0,0,3,1,0),
+                 c(0,1,0,0,0),
+                 c(0,0,0,0,0),
+                 c(0,0,2,0,0))
+netval1 <- network(netval1,matrix.type="adjacency", ignore.eval=FALSE,names.eval="like")
+network.vertex.names(netval1) <- c("A","B","C","D","E")
+list.edge.attributes(netval1)
+
+### 2. igraph 네트워크 자료형
+
+library(igraph)
+
+# 2.1 네트워크 기초 
+
+g1 <- graph(edges=c(1,2, 2,3, 3,1), n=3, directed=FALSE)
+
+plot(g1)
+
+class(g1)
+
+g2 <- graph( edges=c(1,2, 2,3, 3,1), n=10, directed=FALSE)
+
+plot(g2)
+
+g3 <- graph( edges=c("John","Jim", "Jim","Jill", "Jill", "John"))
+plot(g3)
+
+g4 <- graph( c("John", "Jim", "Jim", "Jack", "Jim", "Jack", "John", "John"), 
+             isolates=c("Jesse", "Janis", "Jennifer", "Justin") )  
+
+plot(g4, edge.arrow.size=.5, vertex.color="gold", vertex.size=15, 
+     vertex.frame.color="gray", vertex.label.color="black", 
+     vertex.label.cex=0.8, vertex.label.dist=2, edge.curved=0.2)
+
+
+plot(graph_from_literal(a---b, b---c))
+
+plot(graph_from_literal(a--+b, b+--c))
+
+plot(graph_from_literal(a+-+b, b+-+c)) 
+
+plot(graph_from_literal(a:b:c---c:d:e))
+
+gl <- graph_from_literal(a-b-c-d-e-f, a-g-h-b, h-e:f:i, j)
+plot(gl)
+
+# 2.2 엣지, 노드 속성
+
+# detach(package:statnet)
+suppressWarnings(suppressMessages(library(igraph)))
+
+# 사회행렬 igraph 전환
+inet1 <- graph.adjacency(netmat1)
+class(inet1)
+
+#str(inet1)
+
+# 엣지리스트 igraph 전환
+inet2 <- graph.edgelist(netmat2)
+#summary(inet2)
+#str(inet2)
+
+# 노드와 엣지 속성 부여
+V(inet2)$name <- c("A","B","C","D","E")
+E(inet2)$val <- c(1:6)
+#summary(inet2)
+#str(inet2)
 
 
 
