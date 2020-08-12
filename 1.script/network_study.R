@@ -69,11 +69,11 @@ netval1 <- network(netval1,matrix.type="adjacency", ignore.eval=FALSE,names.eval
 network.vertex.names(netval1) <- c("A","B","C","D","E")
 list.edge.attributes(netval1)
 
-### 2. igraph 네트워크 자료형
+### 2. igraph ------
 
 library(igraph)
 
-# 2.1 네트워크 기초 
+# 2.1 네트워크 기초 ------
 
 g1 <- graph(edges=c(1,2, 2,3, 3,1), n=3, directed=FALSE)
 
@@ -107,7 +107,7 @@ plot(graph_from_literal(a:b:c---c:d:e))
 gl <- graph_from_literal(a-b-c-d-e-f, a-g-h-b, h-e:f:i, j)
 plot(gl)
 
-# 2.2 엣지, 노드 속성
+# 2.2 엣지, 노드 속성 -------
 
 # detach(package:statnet)
 suppressWarnings(suppressMessages(library(igraph)))
@@ -126,8 +126,59 @@ inet2 <- graph.edgelist(netmat2)
 # 노드와 엣지 속성 부여
 V(inet2)$name <- c("A","B","C","D","E")
 E(inet2)$val <- c(1:6)
-#summary(inet2)
-#str(inet2)
+
+summary(inet2)
+str(inet2)
+
+V(g4) 
+ ### 노드 이름  
+
+V(g4)$name
+
+E(g4)
+ ### 엣지 이름  
+
+g4[]
+ ### matrix
+
+# 엣지, 노드 속성부여 방법 1
+V(g4)$gender <- c("male", "male", "male", "male", "female", "female", "male")
+E(g4)$type <- "email"
+E(g4)$weight <- 10
+
+vertex_attr(g4)
+
+edge_attr(g4)
+
+graph_attr(g4)
+
+# 엣지, 노드 속성부여 방법 2
+g4 <- set_graph_attr(g4, "name", "Email Network")
+g4 <- set_graph_attr(g4, "something", "A thing")
+graph_attr_names(g4)
+
+graph_attr(g4, "name")
+
+graph_attr(g4)
+
+g4 <- delete_graph_attr(g4, "something")
+graph_attr(g4)
+
+# 시각화
+plot(g4, edge.arrow.size=.5, vertex.label.color="black", vertex.label.dist=1.5,
+     vertex.color=c( "pink", "skyblue")[1+(V(g4)$gender=="male")] )
 
 
+# 간략화
+g4s <- simplify( g4, remove.multiple = TRUE, remove.loops = TRUE, 
+                 edge.attr.comb=c(weight="sum", type="ignore") )
+plot(g4s, vertex.label.dist=1.5)
+
+#### 3. network <-> igraph 네트워크 객체전환 
+
+library(intergraph)
+class(net1)
+net1igraph <- asIgraph(net1)
+class(net1igraph)
+str(net1igraph)
 
