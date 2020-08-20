@@ -174,11 +174,37 @@ g4s <- simplify( g4, remove.multiple = TRUE, remove.loops = TRUE,
                  edge.attr.comb=c(weight="sum", type="ignore") )
 plot(g4s, vertex.label.dist=1.5)
 
-#### 3. network <-> igraph 네트워크 객체전환 
+#### 3. network <-> igraph 네트워크 객체전환 -----
 
 library(intergraph)
 class(net1)
 net1igraph <- asIgraph(net1)
 class(net1igraph)
 str(net1igraph)
+
+#### 4. 네트워크 구조 사례
+
+library(dplyr)
+library(dbplyr)
+library(readr)
+library(tidyverse)
+#-----------------------------------------------------------------------
+# edgelist
+
+nodes <- read_csv("https://raw.githubusercontent.com/kateto/R-Network-Visualization-Workshop/master/Data/Dataset1-Media-Example-NODES.csv", col_names = TRUE)
+
+links <- read_csv("https://raw.githubusercontent.com/kateto/R-Network-Visualization-Workshop/master/Data/Dataset1-Media-Example-EDGES.csv", col_names = TRUE)
+
+#-----------------------------------------------------------------------
+# 행렬
+
+nodes2 <- read_csv("https://raw.githubusercontent.com/kateto/R-Network-Visualization-Workshop/master/Data/Dataset2-Media-User-Example-NODES.csv", col_names = TRUE)
+links2 <- read_csv("https://raw.githubusercontent.com/kateto/R-Network-Visualization-Workshop/master/Data/Dataset2-Media-User-Example-EDGES.csv", col_names = TRUE)
+
+#-----------------------------------------------------------------------
+# 데이터 살펴보기
+#-----------------------------------------------------------------------
+
+head(nodes)
+
 
