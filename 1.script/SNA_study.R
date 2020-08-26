@@ -1,210 +1,152 @@
-### SNA start 
+#==========================================================================
+# Topic : Social Network
+#         
+# Date : 2019. 05. 29
+# Author : Junmo Nam
+# URL : https://apple-rbox.tistory.com/11
+#==========================================================================
 
-## URL : https://kuduz.tistory.com/1087?category=834629
 
-### 1. package ----
+#==========================================================================
+# Load packages ----
+#==========================================================================
 
-#install.packages('tidygraph')
-#install.packages('ggraph')
+pkg = c('dplyr','igraph','networkD3','visNetwork','ggplot2')
 
-library(tidygraph)
-library(ggraph)
-library(dplyr)
-library(igraph)
+sapply(pkg,require,character.only = T)
 
-### 2. topic:featureing  ----
 
-## 2.1 load data
+#==========================================================================
+# Make graph in igraph -----
+#==========================================================================
 
-feat <- read.csv('./0.data/featuring.csv')
 
-## 2.2 data preprocessing 
+df = data.frame(start = c('a','a','b','c','d','e','f','f','f','f'),
+                end = c('a','b','c','d','e','e','a','b','c','e'))
 
-fg <- as_tbl_graph(feat)
+#make network
+G = graph_from_data_frame(df,directed = F)
+graph_from_data_frame(df,directed = F) #undirected
 
-## 2.3 graph
+plot(G)
+v = V(G)
+attributes(v)
 
-plot(fg)
+#shortest path
+shortest.paths(G)
+  
+shortest_paths(G,from = 'a',to = 'e')
+ # shortest.paths : undirected
+ # shortest_paths : directed
 
-ggraph(fg, layout = 'kk') +  geom_node_point()  +  geom_edge_link()
+#degree
+degree(G) #all
+degree(G,mode = 'in') #in
+degree(G,mode = 'out') #out
 
-feat %>%
-  as_tbl_graph() %>%
-  ggraph(layout='kk') + 
-  geom_node_text(aes(label=name)) +
-  geom_edge_link(aes(start_cap = label_rect(node1.name), end_cap = label_rect(node2.name)))
+#Power law fit or not
+d.dist = degree_distribution(G, cumulative = T)
+p.fit = power.law.fit(d.dist,impelementation = "plfit");p.fit
 
-### 3. topic : subway-----
+#eccentricity
+eccentricity(G) #undirected
+eccentricity(G,mode = 'in')
+eccentricity(G,mode = 'out')
 
-## 3.1 load data
+#diameter and radius
+diameter(G)
+radius(G)
 
-subway <- read.csv('./0.data/subway.csv')
+#centrality compare
+central.df = data.frame(degree = degree(G) / (length(names(v))-1),
+                        between = betweenness(G),
+                        close = closeness(G,normalized = T));central.df
 
-metro <- read.csv('./0.data/metro.csv')
+#k core
+coreness(G)
 
-## 3.2 graph
+#LCC(local clustering coefficient) and Transitivity
+trans = transitivity(G, type = "globalundirected") 
+LCC = transitivity(G, type = "localundirected")  
 
-subway %>% as_tbl_graph() %>%
-  ggraph(layout='kk') + 
-  geom_edge_link(aes(color=line)) + 
-  geom_node_point(color='gray25', size=1)
+#===========================
+# 네트워크 이론 추가
+#===========================
 
-## 3.3 centrality
+#Power Law
+g <- static.power.law.game(500, 1000, exponent.out= 2.2, exponent.in = -1,
+                           loops = FALSE, multiple = TRUE, finite.size.correction = TRUE)
+V(g)
 
-# • 매개 중심성: centrality_betweenness()
-# • 근접 중심성: centrality_closeness()
-# • 고유벡터 중심성: centrality_eigen()
-# • 페이지랭크: centrality_pagerank()
-# • 연결 중심성: centrality_degree()
+plot(g,vertex.size = 5,vertex.label = NA)
 
 
-# 고유벡터 중심성(eigenvector centrality) : 한 노드와 연결된 다른 노드의 중요성까지 따져서 중심성을 계산한 결과
+data.frame(degree = 0:max(degree(g)),p_k = degree.distribution(g)) %>% 
+  ggplot(aes(degree,p_k))+
+  geom_point()+
+  theme_bw()+
+  ylab('P(k)')+
+  ggtitle('Power law fit of graph g')
 
-subway %>% as_tbl_graph() %>%
-  mutate(eig=centrality_eigen()) %>%
-  as_tibble %>% arrange(desc(eig))
+#transitivity = 3 * 삼각형 개수 / 3개의 노드가 연결된 경우
 
+small_g = data.frame(start = c('a','a','b','d'),end = c('c','b','c','a')) %>%
+  graph_from_data_frame(directed = F)
 
-metro %>% as_tbl_graph() %>%
-  mutate(eig=centrality_eigen()) %>%
-  as_tibble %>% 
-  arrange(desc(eig))
+plot(small_g)
 
-# 가중치(weights) 적용  
+transitivity(small_g)
 
-metro %>% as_tbl_graph() %>%
-  mutate(eig=centrality_pagerank(weights=total)) %>%
-  as_tibble %>% 
-  arrange(desc(eig))
+#clustering coefficient = 3개의 노드가 닫힌 형태로 연결됨 / 모든 연결된 경우 = transitivity
 
-### 4. topic : school-----
-### 사람과 단체 분리  
+#local clustering coefficient = 2 * 두 이웃이 연결된 경우  / 이웃 수*(이웃수-1)
+transitivity(small_g,type = 'local')
 
-## 4.1 sample data
+#====================================
+# network D3
+#====================================
 
-school <- data.frame(사람=c('가', '나', '다', '라', '마', '바'),
-                       고교=c('1', '2', '3', '1', '2', '3'),
-                       대학=c('a', 'b', 'a', 'b', 'a', 'b'))
+to_d3 = igraph_to_networkD3(G)
 
-school_고교 <- school[, c(1, 2)]
+#add group
+to_d3$nodes$group = 1
 
-names(school_고교)[2] <- '학교'
+#d3 network
+forceNetwork(Links = to_d3$links,Nodes = to_d3$nodes,
+             Source = 'source', Target = 'target', 
+             NodeID = 'name',Group = 'group')
 
-school_대학 <- school[, c(1, 3)]
+#==========================================================================
+# Visualize network by visNetwork
+#==========================================================================
 
-names(school_대학)[2] <- '학교'
+#build node and edge dataframe
+nodes = data.frame(id = names(v),label = names(v))
+edges = data.frame(from = df$start,to=df$end)
 
-school <- rbind(school_고교, school_대학)
+visNetwork(nodes = nodes, #visualize
+           edges = edges,main = 'graph') 
 
-## 4.2 graph
+#add arrow option
+edges$arrows = 'to'
+visNetwork(nodes = nodes,edges = edges,main = 'graph with arrow') 
 
-school %>% 
-  as_tbl_graph() %>% 
-  ggraph(layout='kk') + 
-  geom_edge_link(aes(start_cap = label_rect(node1.name), end_cap = label_rect(node2.name))) +
-  geom_node_text(aes(label=name))
 
-## 4.3 igraph
+#set node color
+nodes$color = c(rep('red',nrow(nodes)-1),'blue')
+visNetwork(nodes = nodes,edges = edges,main = 'graph with arrow + color') 
 
-sg <- graph_from_data_frame(school)
+#set node title
+nodes$title = paste0(nodes$id,'<br/>','Node number :',1:nrow(nodes))
+visNetwork(nodes = nodes,edges = edges,main = 'graph with arrow + color + title') 
 
-bipartite_mapping(sg) ### 사람 false / 학교 true  
+#turn off physics 
+visNetwork(nodes = nodes,edges = edges,
+           main = 'graph with arrow + color + title + no physics') %>%
+  visIgraphLayout(physics = F)
 
-V(sg) ### v : vertex 꼭지점 
-
-V(sg)$type <- bipartite_mapping(sg)$type
-
-as_incidence_matrix(sg)
-
-t(as_incidence_matrix(sg))
-
-as_incidence_matrix(sg) %*% t(as_incidence_matrix(sg))
-
-sm <- as_incidence_matrix(sg) %*% t(as_incidence_matrix(sg))
-diag(sm) <- 0
-sm
-
-sm %>% as_tbl_graph() %>%
-  ggraph(layout='kk') + 
-  geom_edge_link(aes(start_cap = label_rect(node1.name), end_cap = label_rect(node2.name))) +
-  geom_node_text(aes(label=name))
-
-### 5. topic : kovo----- 
-### 사람과 단체 분리  
-
-## 5.1 load data
-
-k <- read.csv('./0.data/kovo.csv')
-
-## 5.2 data preprocessing
-
-k_고교 <- k[, c(1, 2)]
-k_대학 <- k[, c(1, 3)]
-names(k_고교)[2] <- '학교'
-names(k_대학)[2] <- '학교'
-k <- rbind(k_고교, k_대학)
-
-# 5.3 centrality
-
-k %>% as_tbl_graph() %>%
-  mutate(eig=centrality_eigen()) %>%
-  arrange(desc(eig)) %>%
-  as_tibble
-
-k %>% as_tbl_graph() %>%
-  mutate(pr=centrality_pagerank()) %>%
-  arrange(desc(pr)) %>%
-  as_tibble
-
-kg <- graph_from_data_frame(k)
-V(kg)$type <- bipartite_mapping(kg)$type
-km <- as_incidence_matrix(kg)
-km <- km %*% t(km)
-diag(km) <- 0
-
-km %>% as_tbl_graph()
-
-km %>% as_tbl_graph() %>%
-  mutate(pg=centrality_pagerank()) %>%
-  arrange(desc(pg)) %>%
-  as_tibble
-
-km %>% as_tbl_graph() %>%
-  mutate(cm=group_infomap()) %>%
-  arrange(desc(cm)) %>%
-  as_tibble
-
-km %>% as_tbl_graph() %>%
-  mutate(pg=centrality_pagerank(),
-         cm=group_infomap()) %>%
-  ggraph(layout='lgl') + 
-  geom_edge_link(aes(width=weight), alpha=.8) +
-  scale_edge_width(range=c(0.2, 2)) +
-  geom_node_point(aes(size=pg, color=as.factor(cm)))
-
-### 6. topic : featuring 2019----
-
-# 6.1 load data
-
-feat <- read.csv('./0.data/featuring_2019.csv')
-
-feat %>%
-  as_tbl_graph(directed=FALSE) %>%
-  activate(nodes) %>%
-  mutate(eigen = centrality_eigen(),
-         group = group_infomap()) %>%
-  ggraph(layout='nicely') +
-  geom_edge_link(color='gray50', alpha=.2) +
-  geom_node_point(aes(color=factor(group), size=eigen)) +
-  geom_node_text(aes(label=name), size=3, repel=TRUE) +
-  theme_graph() +
-  theme(legend.position='none')
-
-# https://statkclee.github.io/network/tidygraph-media.html
-
-
-
-
-
-
-
+#highlight connected one
+visNetwork(nodes = nodes,edges = edges,
+           main = 'graph with arrow + color + title + no physics + highlight') %>%
+  visIgraphLayout(physics = F) %>% 
+  visOptions(highlightNearest = T)
