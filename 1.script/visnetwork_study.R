@@ -432,5 +432,34 @@ visNetwork(nodes, edges, height = "700px", width = "100%") %>%
              nodesIdSelection = TRUE) %>%
   visPhysics(stabilization = FALSE)
 
+#■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+# layout
+#■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+# hierarchical 계측적인 
+
+nodes <- data.frame(id = 1:7)
+edges <- data.frame(from = c(1,2,2,2,3,3),
+                    to = c(2,3,4,5,6,7))
+visNetwork(nodes, edges, width = "100%") %>% 
+  visEdges(arrows = "from") %>% 
+  visHierarchicalLayout() # same as   visLayout(hierarchical = TRUE) 
 
 
+visNetwork(nodes, edges, width = "100%") %>% 
+  visEdges(arrows = "from") %>% 
+  visHierarchicalLayout(direction = "LR", levelSeparation = 500)
+
+nodes <- data.frame(id = 1:4, level = c(2, 1, 1, 1))
+edges <- data.frame(from = c(1, 1, 1),
+                    to = c(2,3,4))
+### with level
+visNetwork(nodes, edges, width = "100%") %>% 
+  visEdges(arrows = "from") %>% 
+  visHierarchicalLayout() # same as   visLayout(hierarchical = TRUE) 
+
+### without level (vis.js choice)
+nodes$level <- NULL
+visNetwork(nodes, edges, width = "100%") %>% 
+  visEdges(arrows = "from") %>% 
+  visHierarchicalLayout() # same as   visLayout(hierarchical = TRUE) 
