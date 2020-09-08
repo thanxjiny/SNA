@@ -20,6 +20,11 @@
 
 #install.packages("visNetwork")
 
+rm(list = ls())
+gc(reset = T)
+getwd()
+
+
 pkg = c('dplyr','igraph','networkD3','visNetwork','shiny')
 
 sapply(pkg,require,character.only = T)
@@ -246,7 +251,7 @@ visNetwork(nodes, edges, width = "100%") %>%
   visGroups(groupname = "B", color = "lightblue") %>%
   visLegend(addEdges = ledges, addNodes = lnodes, useGroups = FALSE)
 
-ledges <- data.frame(color = c("lightblue", "red"),
+edges <- data.frame(color = c("lightblue", "red"),
                      label = c("reverse", "depends"), arrows =c("to", "from"))
 
 visNetwork(nodes, edges, width = "100%") %>%
@@ -463,3 +468,118 @@ nodes$level <- NULL
 visNetwork(nodes, edges, width = "100%") %>% 
   visEdges(arrows = "from") %>% 
   visHierarchicalLayout() # same as   visLayout(hierarchical = TRUE) 
+
+#■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+# sample ----
+#■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+# Collapse / Uncollapse Nodes
+
+nb <- 10
+nodes <- data.frame(id = 1:nb, label = paste("Label", 1:nb))
+# label : node name
+# value : node size
+
+edges <- data.frame(from = c(8,2,7,6,1,8,9,4,6,2),
+                    to = c(3,7,2,7,9,1,5,3,2,9),
+                    label = paste(1:nb),
+                    color = c("red", "red","blue","blue","blue"))
+                    
+# keeping all parent node attributes  
+visNetwork(nodes, edges) %>% visEdges(arrows = "to") %>%
+  visOptions(collapse = TRUE) %>% 
+  visNodes(physics = F) %>%    
+  visOptions(manipulation = TRUE)
+
+#■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+# layout ----
+#■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+# set seed
+
+nodes <- data.frame(id = 1:4)
+edges <- data.frame(from = c(2,4,3,3), to = c(1,2,4,2))
+
+visNetwork(nodes, edges, width = "100%") %>% 
+  visLayout(randomSeed = 12) # to have always the same network 
+
+# Hierarchical Layout
+
+nodes <- data.frame(id = 1:7)
+edges <- data.frame(from = c(1,2,2,2,3,3),
+                    to = c(2,3,4,5,6,7))
+
+visNetwork(nodes, edges, width = "100%") %>% 
+  visEdges(arrows = "from") %>% 
+  visHierarchicalLayout() # same as visLayout(hierarchical = TRUE) 
+
+visNetwork(nodes, edges, width = "100%") %>% 
+  visEdges(arrows = "from") %>% 
+  visHierarchicalLayout(direction = "LR", levelSeparation = 500)
+
+## levelSeparation, the distance between the different levels.
+## direction, the direction of the hierarchical layout.
+## sortMethod, the algorithm used to ascertain the levels of the nodes based on the data
+
+# with level
+
+nodes <- data.frame(id = 1:4, level = c(2, 1, 1, 1))
+edges <- data.frame(from = c(1, 1, 1),
+                    to = c(2,3,4))
+
+visNetwork(nodes, edges, width = "100%") %>% 
+  visEdges(arrows = "from") %>% 
+  visHierarchicalLayout() # same as   visLayout(hierarchical = TRUE) 
+
+nodes$level <- NULL
+
+visNetwork(nodes, edges, width = "100%") %>% 
+  visEdges(arrows = "from") %>% 
+  visHierarchicalLayout() # same as   visLayout(hierarchical = TRUE) 
+
+#■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+# igraph ----
+#■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+nnodes <- 100
+nnedges <- 200
+
+nodes <- data.frame(id = 1:nnodes)
+edges <- data.frame(from = sample(1:nnodes, nnedges, replace = T),
+                    to = sample(1:nnodes, nnedges, replace = T))
+
+# with defaut layout
+visNetwork(nodes, edges, height = "500px") %>%
+  visIgraphLayout() %>%
+  visNodes(size = 10)
+
+visNetwork(nodes, edges, height = "500px") %>%
+  visIgraphLayout(layout = "layout_in_circle") %>%
+  visNodes(size = 10) %>%
+  visOptions(highlightNearest = list(enabled = T, hover = T), 
+             nodesIdSelection = T)
+
+library("igraph", quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+igraph_network <- graph.famous("Walther")
+
+plot(igraph_network)
+
+# get data and plot :
+data <- toVisNetworkData(igraph_network)
+visNetwork(nodes = data$nodes, edges = data$edges, height = "500px")
+
+# or plot directly
+visIgraph(igraph_network)
+
+#■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+# performance ----
+#■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+visNetwork(nodes, edges) %>%
+  visPhysics(stabilization = FALSE)
+
+visNetwork(nodes, edges) %>%
+  visEdges(smooth = FALSE)
+
+visNetwork(nodes, edges) %>%
+  visIgraphLayout()
