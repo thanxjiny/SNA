@@ -574,63 +574,205 @@ visIgraph(igraph_network)
 #■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 # performance ----
 #■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-nnodes <- 2000
-nnedges <- 2000
 
-nodes <- data.frame(id = 1:nnodes)
-edges <- data.frame(from = sample(1:nnodes, nnedges, replace = T),
-                    to = sample(1:nnodes, nnedges, replace = T))
+nnodes <- 100
+nnedges <- 100
 
-nnodes <- 1000
-nnedges <- 1000
 nodes <- data.frame(id = 1:nnodes, label = paste("Label", 1:nnodes), stringsAsFactors = FALSE)
+
 edges <- data.frame(from = sample(1:nnodes, nnedges, replace = T),
                     to = sample(1:nnodes, nnedges, replace = T))
-
-
-# label : node name
-# value : node size
-
 
 # disable or control stabilization using visPhysics 
-visNetwork(nodes, edges) %>%
-  visPhysics(stabilization = FALSE)
+visNetwork(nodes, edges) %>% 
+  visPhysics(stabilization = FALSE) 
+
+ ## stabilization : the condition of being fixed and not changing, or the act of making something like this
 
 #disable smooth curve for edges.
 visNetwork(nodes, edges) %>%
   visEdges(smooth = FALSE)
 
-# visigraphlayout
 visNetwork(nodes, edges) %>%
   visIgraphLayout()
 
-visNetwork(nodes, edges, height = "500px", width = "100%") %>% 
-  visOptions(highlightNearest = TRUE, 
-             nodesIdSelection = list(enabled = TRUE,
-                                     selected = "8",
-                                     values = c(5:10),
-                                     style = 'width: 200px; height: 26px;
-                                 background: #f8f8f8;
-                                 color: darkblue;
-                                 border:none;
-                                 outline:none;')) %>%
-  visLayout(randomSeed = 123)
+#■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+# cart ----
+#■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 
 
+library(rpart)
+library(sparkline)
 
+# Basic classification tree
+res <- rpart(Species~., data=iris)
+visTree(res, main = "Iris classification Tree", width = "100%")
 
+# Regression tree
+res <- rpart(Petal.Length~., data=iris)
+visTree(res, edgesFontSize = 14, nodesFontSize = 16, width = "100%")
 
-nb <- 10
-nodes <- data.frame(id = 1:nb, label = paste("Label", 1:nb),
-                    group = sample(LETTERS[1:3], nb, replace = TRUE), value = 1:nb,
-                    title = paste0("<p>", 1:nb,"<br>Tooltip !</p>"), stringsAsFactors = FALSE)
-# label : node name
-# value : node size
+data("solder")
+res <- rpart(Opening~., data = solder, control = rpart.control(cp = 0.00005))
+visTree(res, height = "800px", nodesPopSize = TRUE, minNodeSize = 10, 
+        maxNodeSize = 30, width = "100%")
 
-edges <- data.frame(from = c(8,2,7,6,1,8,9,4,6,2),
-                    to = c(3,7,2,7,9,1,5,3,2,9),
-                    value = rnorm(nb, 10), label = paste("Edge", 1:nb),
-                    title = paste0("<p>", 1:nb,"<br>Edge Tooltip !</p>"))
+#■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+# shiny ----
+#■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 
+require(shiny)
+require(visNetwork)
 
+#renderVisNetwork
+
+server <- function(input, output) {
+  output$network <- renderVisNetwork({
+    # minimal example
+    nodes <- data.frame(id = 1:3)
+    edges <- data.frame(from = c(1,2), to = c(1,3))
+    
+    visNetwork(nodes, edges)
+  })
+}
+
+ui <- fluidPage(
+  visNetworkOutput("network")
+)
+
+shinyApp(ui = ui, server = server)
+
+#Shiny interactions
+
+ ## with nodesIdSelection
+
+server <- function(input, output) {
+  output$network <- renderVisNetwork({
+    nodes <- data.frame(id = 1:3)
+    edges <- data.frame(from = c(1,2), to = c(1,3))
+    visNetwork(nodes, edges) %>% 
+      visOptions(nodesIdSelection = TRUE)
+  })
+}
+
+ui <- fluidPage(
+  visNetworkOutput("network")
+)
+
+shinyApp(ui = ui, server = server)
+
+ ##with selectedB
+
+server <- function(input, output) {
+  output$network <- renderVisNetwork({
+    nodes <- data.frame(id = 1:3)
+    edges <- data.frame(from = c(1,2), to = c(1,3))
+    visNetwork(nodes, edges) %>% 
+      visOptions(selectedBy = "group")
+  })
+}
+
+ui <- fluidPage(
+  visNetworkOutput("network")
+)
+
+shinyApp(ui = ui, server = server)
+
+##with manipulation
+
+server <- function(input, output) {
+  output$network <- renderVisNetwork({
+    nodes <- data.frame(id = 1:3)
+    edges <- data.frame(from = c(1,2), to = c(1,3))
+    visNetwork(nodes, edges) %>% 
+      visOptions(manipulation = TRUE)
+  })
+}
+
+ui <- fluidPage(
+  visNetworkOutput("network")
+)
+
+shinyApp(ui = ui, server = server)
+
+#Modify your network with visNetworkProxy
+
+require(shiny)
+require(visNetwork)
+
+server <- function(input, output) {
+  output$network_proxy_nodes <- renderVisNetwork({
+    # minimal example
+    nodes <- data.frame(id = 1:3)
+    edges <- data.frame(from = c(1,2), to = c(1,3))
+    
+    visNetwork(nodes, edges) %>% visNodes(color = "blue")
+  })
+  
+  
+  observe({
+    visNetworkProxy("network_proxy_nodes") %>%
+      visFocus(id = input$Focus, scale = 4)
+  })
+  
+  observe({
+    visNetworkProxy("network_proxy_nodes") %>%
+      visNodes(color = input$color)
+  })
+  
+}
+
+ui <- fluidPage(
+  fluidRow(
+    column(
+      width = 4,
+      selectInput("color", "Color :",
+                  c("blue", "red", "green")),
+      selectInput("Focus", "Focus on node :",
+                  c(1:3))
+    ),
+    column(
+      width = 8,
+      visNetworkOutput("network_proxy_nodes", height = "400px")
+    )
+  )
+)
+
+shinyApp(ui = ui, server = server)
+
+#Build your own input
+
+library(visNetwork)
+library(shiny)
+
+server <- function(input, output) {
+  output$network <- renderVisNetwork({
+    # minimal example
+    nodes <- data.frame(id = 1:3, label = 1:3)
+    edges <- data.frame(from = c(1,2), to = c(1,3))
+    
+    visNetwork(nodes, edges) %>%
+      visInteraction(hover = TRUE) %>%
+      visEvents(hoverNode = "function(nodes) {
+        Shiny.onInputChange('current_node_id', nodes);
+      ;}")
+  })
+  
+  output$shiny_return <- renderPrint({
+    input$current_node_id
+  })
+}
+
+ui <- fluidPage(
+  visNetworkOutput("network"),
+  verbatimTextOutput("shiny_return")
+)
+
+shinyApp(ui = ui, server = server)
+
+#■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+# example ----
+#■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+shiny::runApp(system.file("shiny", package = "visNetwork"))
 
