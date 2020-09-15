@@ -776,3 +776,121 @@ shinyApp(ui = ui, server = server)
 
 shiny::runApp(system.file("shiny", package = "visNetwork"))
 
+#■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+# intersection ----
+#■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+# Frozen network
+
+## dragNodes : enable or not the selection and movement of nodes (click on a node, and move your mouse)?
+## dragView : enable or not the movement of the full network (click everywhere except node, and move your mouse) ?
+## zoomView : enable or not the zoom (use mouse scroll) ?
+
+nb <- 10
+nodes <- data.frame(id = 1:nb, label = paste("Label", 1:nb),
+                    group = sample(LETTERS[1:3], nb, replace = TRUE), value = 1:nb,
+                    title = paste0("<p>", 1:nb,"<br>Tooltip !</p>"), stringsAsFactors = FALSE)
+
+edges <- data.frame(from = c(8,2,7,6,1,8,9,4,6,2),
+                    to = c(3,7,2,7,9,1,5,3,2,9),
+                    value = rnorm(nb, 10), label = paste("Edge", 1:nb),
+                    title = paste0("<p>", 1:nb,"<br>Edge Tooltip !</p>"))
+
+visNetwork(nodes, edges, height = "500px", width = "100%") %>% 
+  visInteraction(dragNodes = FALSE, 
+                 dragView = FALSE, 
+                 zoomView = FALSE) %>%
+  visLayout(randomSeed = 123)
+
+# Hide edges/nodes on drag
+
+## hideEdgesOnDrag : hide egdes when dragging the view
+## hideNodesOnDrag : hide nodes when dragging the view
+
+visNetwork(nodes, edges, height = "500px", width = "100%") %>% 
+  visInteraction(hideEdgesOnDrag = TRUE) %>%
+  visLayout(randomSeed = 123)
+
+# Navigation buttons
+
+visNetwork(nodes, edges, height = "800px", width = "100%") %>% 
+  visInteraction(navigationButtons = TRUE)
+
+# and also
+
+## keyboard : enable keyboard manipulation rather than mouse (click on network before)
+## hover and hoverConnectedEdges : control hover
+## selectable : disable nodes and edges selection
+## tooltipDelay : set delay before show pop-up
+
+visNetwork(nodes, edges, height = "500px", width = "100%") %>% 
+  visInteraction(keyboard = TRUE, tooltipDelay = 0)
+
+#■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+# physics ----
+#■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+
+## solver (‘barnesHut’, ‘repulsion’, ‘hierarchicalRepulsion’, ‘forceAtlas2Based’)
+
+nodes <- data.frame(id = 1:10)
+edges <- data.frame(from = round(runif(8)*10), to = round(runif(8)*10))
+
+visNetwork(nodes, edges, height = "500px", width = "100%") %>%
+  visPhysics(solver = "forceAtlas2Based", 
+             forceAtlas2Based = list(gravitationalConstant = -1000))
+
+#■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+# configure tools ----
+#■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+nodes <- data.frame(id = 1:3, label = LETTERS[1:3])
+edges <- data.frame(from = c(1,2), to = c(1,3))
+
+# don't look in RStudio viewer
+visNetwork(nodes, edges, width = "100%") %>%
+  visConfigure(enabled = TRUE)
+
+#■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+# more ----
+#■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+nodes <- data.frame(id = 1:3, label = 1:3)
+edges <- data.frame(from = c(1,2), to = c(1,3))
+
+# Add javascript event with visEvents()
+
+visNetwork(nodes, edges) %>%
+  visEvents(selectNode = "function(properties) {
+      alert('selected nodes ' + this.body.data.nodes.get(properties.nodes[0]).id);}")
+
+# save. html
+
+network <- visNetwork(nodes, edges, width = "100%")
+network %>% visSave(file = "network.html")
+
+# same as
+visSave(network, file = "network.html")
+  # or
+htmlwidgets::saveWidget(network, "network.html")
+
+# Use DOT language data
+
+visNetwork(dot = 'dinetwork {1 -> 1 -> 2; 2 -> 3; 2 -- 4; 2 -> 1 }', 
+           width = "100%")
+
+
+nodes <- data.frame(id = 1:10, label = paste("Label", 1:10), 
+                    group = sample(c("A", "B"), 10, replace = TRUE))
+
+edges <- data.frame(from = c(2,5,10), to = c(1,2,10))
+
+# Clustering
+
+visNetwork(nodes, edges, height = "400px", width = "100%") %>%
+  visGroups(groupname = "A", color = "red", shape = "square") %>%
+  visGroups(groupname = "B", color = "yellow", shape = "triangle") %>%
+  visClusteringByColor(colors = c("red")) %>%
+  visClusteringByGroup(groups = c("B")) %>%
+  visLegend()
+
