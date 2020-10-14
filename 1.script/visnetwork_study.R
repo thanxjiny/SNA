@@ -486,7 +486,7 @@ visNetwork(nodes, edges, width = "100%") %>%
 
 # Collapse / Uncollapse Nodes
 
-nb <- 10
+nb <- 100
 nodes <- data.frame(id = 1:nb, label = paste("Label", 1:nb))
 # label : node name
 # value : node size
@@ -500,7 +500,61 @@ edges <- data.frame(from = c(8,2,7,6,1,8,9,4,6,2),
 visNetwork(nodes, edges) %>% visEdges(arrows = "to") %>%
   visOptions(collapse = TRUE) %>% 
   visNodes(physics = F) %>%    
+  visOptions(manipulation = TRUE) %>% 
+  visIgraphLayout() 
+
+library(visNetwork)
+
+## Not run: 
+nnodes <- 200
+nnedges <- 400
+
+nodes <- data.frame(id = 1:nnodes)
+edges <- data.frame(from = sample(1:nnodes, nnedges, replace = T), 
+                    to = sample(1:nnodes, nnedges, replace = T))
+
+# with defaut layout
+visNetwork(nodes, edges) %>% 
+visIgraphLayout()
+
+# use full space
+visNetwork(nodes, edges) %>%  
+visIgraphLayout(type = "full")
+
+# in circle ?
+visNetwork(nodes, edges) %>% 
+visIgraphLayout(layout = "layout_in_circle") %>% 
+visOptions(highlightNearest = list(enabled = T, hover = T), 
+           nodesIdSelection = T)
+
+# keep physics with smooth curves ?
+visNetwork(nodes, edges) %>% 
+  visIgraphLayout(layout = "layout_nicely", type = "full", 
+                  physics = TRUE, smooth = TRUE) %>% 
+  visNodes(physics = F) %>%    
   visOptions(manipulation = TRUE)
+
+?visIgraphLayout
+
+# fix radomSeed to keep position
+visNetwork(nodes, edges) %>% 
+visIgraphLayout(randomSeed = 123)
+
+visNetwork(nodes, edges) %>% 
+visIgraphLayout(randomSeed = 123)
+
+# layout_with_sugiyama
+nodes <- data.frame(id = 1:5)
+edges <- data.frame(from = c(1, 2, 2, 4), to = c(2, 3, 4, 5))
+
+visNetwork(nodes, edges) %>% 
+visIgraphLayout(layout = "layout_with_sugiyama", layers = c(1, 2, 3, 3, 4))
+
+visNetwork(nodes, edges) %>% 
+visIgraphLayout(layout = "layout_with_sugiyama")
+
+
+## End(Not run)
 
 #■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 # layout ----
